@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pour Samuella 💕</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a0a2e 0%, #4a1942 50%, #ff6b9d 100%);
+            font-family: 'Playfair Display', serif;
+            touch-action: none;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            pointer-events: auto;
+            animation: fadeInDown 2s ease-out;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 107, 157, 0.8), 0 0 60px rgba(255, 107, 157, 0.4);
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #ffebf0, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            color: rgba(255, 255, 255, 0.9);
+            font-style: italic;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .poem-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 500px;
+            pointer-events: auto;
+            opacity: 0;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            z-index: 20;
+        }
+
+        .poem-container.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .poem-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poem-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+        .poem-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            color: #ffebf0;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .poem-text {
+            font-size: clamp(1rem, 3.5vw, 1.3rem);
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.95);
+            position: relative;
+            z-index: 1;
+            white-space: pre-line;
+        }
+
+        .close-poem {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-poem:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .controls {
+            pointer-events: auto;
+            text-align: center;
+            padding-bottom: 30px;
+            animation: fadeInUp 2s ease-out;
+        }
+
+        .instruction {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            margin-bottom: 15px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .hearts-counter {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            color: #ffebf0;
+            margin-top: 10px;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .floating-hearts {
+            position: fixed;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @media (max-width: 480px) {
+            .poem-card {
+                padding: 20px;
+            }
+
+            #ui-layer {
+                padding: 15px;
+            }
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a0a2e 0%, #4a1942 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-heart {
+            font-size: 4rem;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-heart">💕</div>
+        <div class="loading-text">Chargement de l'amour...</div>
+        <noscript>
+            <style>.loading { display: none !important; }</style>
+            <div style="color: white; text-align: center; padding: 20px;">
+                JavaScript est nécessaire pour voir ce cadeau 💕
+            </div>
+        </noscript>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="header">
+            <h1>Pour Samuella</h1>
+            <div class="subtitle">Mon cœur, mon amour, ma Valentine</div>
+        </div>
+
+        <div class="poem-container" id="poemContainer">
+            <div class="poem-card">
+                <button class="close-poem" onclick="closePoem()">×</button>
+                <div class="poem-title" id="poemTitle"></div>
+                <div class="poem-text" id="poemText"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="instruction">✨ Touche les cœurs flottants pour découvrir des poèmes ✨</div>
+            <div class="hearts-counter">Cœurs collectés: <span id="collectedCount">0</span> / <span id="totalCount">5</span></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Poèmes d'amour pour Samuella
+const poems = [
+    {
+        title: "Éternité",
+        text: `Samuella,
+
+Dans tes yeux, je vois l'infini,
+Un univers où je veux vieillir.
+Chaque battement de mon cœur
+Épelle ton nom en secret.
+
+Tu es le poème
+Que la vie a écrit pour moi,
+Le plus beau des hasards,
+Mon éternité.`,
+        color: 0xff6b9d
+    },
+    {
+        title: "Lumière",
+        text: `Samuella,
+
+Tu es la lumière qui perce
+Mes nuits les plus sombres.
+Avec toi, chaque matin
+Est une renaissance.
+
+Ton rire éclaire mon âme,
+Ta présence me guérit.
+Tu es mon soleil intérieur,
+Mon phare, ma vérité.`,
+        color: 0xffb6c1
+    },
+    {
+        title: "Douceur",
+        text: `Samuella,
+
+Il n'y a pas de mot assez doux
+Pour dire ce que je ressens.
+Alors je te donne mon silence,
+Mes mains, mes temps.
+
+Dans le creux de ton épaule,
+J'ai trouvé ma maison.
+Ton cœur bat au rythme du mien,
+Notre symphonie parfaite.`,
+        color: 0xff69b4
+    },
+    {
+        title: "Aventure",
+        text: `Samuella,
+
+Avec toi, chaque instant
+Est une nouvelle aventure.
+Le monde s'efface
+Quand je te regarde.
+
+Je veux découvrir
+Chaque recoin de ton âme,
+Chaque rêve, chaque peur,
+Et les chérir tous.`,
+        color: 0xff1493
+    },
+    {
+        title: "Promesse",
+        text: `Samuella,
+
+Je te promets les saisons,
+Les tempêtes et les calmes.
+Je te promets mes matins
+Et toutes mes nuits.
+
+Je te promets de t'aimer
+Non pas comme on aime un jour,
+Mais comme on aime toujours,
+Sans fin, sans peur, sans raison.
+
+Joyeuse Saint-Valentin, mon amour.`,
+        color: 0xdc143c
+    }
+];
+
+// Variables globales
+let scene, camera, renderer, controls;
+let hearts = [];
+let particles = [];
+let raycaster, mouse;
+let collectedPoems = new Set();
+let isMobile = window.matchMedia("(pointer: coarse)").matches;
+
+// Initialisation
+function init() {
+    // Scène
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x1a0a2e, 0.02);
+
+    // Caméra
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 15);
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // Contrôles (désactivés sur mobile pour l'interaction tactile)
+    if (!isMobile) {
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = false;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+    }
+
+    // Lumières
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const pointLight1 = new THREE.PointLight(0xff6b9d, 2, 50);
+    pointLight1.position.set(10, 10, 10);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xffb6c1, 2, 50);
+    pointLight2.position.set(-10, -10, 10);
+    scene.add(pointLight2);
+
+    const pointLight3 = new THREE.PointLight(0xff1493, 1.5, 50);
+    pointLight3.position.set(0, 10, -10);
+    scene.add(pointLight3);
+
+    // Raycaster pour les interactions
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+    // Créer les éléments 3D
+    createHeartShape();
+    createFloatingHearts();
+    createParticles();
+    createAmbientSpheres();
+
+    // Event listeners
+    window.addEventListener('resize', onWindowResize);
+
+    if (isMobile) {
+        renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+        renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+    } else {
+        renderer.domElement.addEventListener('mousemove', onMouseMove);
+        renderer.domElement.addEventListener('click', onClick);
+    }
+
+    // Cacher le loading
+    setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+    }, 1500);
+
+    // Animation loop
+    animate();
+}
+
+// Créer la forme de cœur central
+function createHeartShape() {
+    const x = 0, y = 0;
+    const heartShape = new THREE.Shape();
+
+    // Forme de cœur mathématique
+    heartShape.moveTo(x + 5, y + 5);
+    heartShape.bezierCurveTo(x + 5, y + 5, x + 4, y, x, y);
+    heartShape.bezierCurveTo(x - 6, y, x - 6, y + 7, x - 6, y + 7);
+    heartShape.bezierCurveTo(x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19);
+    heartShape.bezierCurveTo(x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7);
+    heartShape.bezierCurveTo(x + 16, y + 7, x + 16, y, x + 10, y);
+    heartShape.bezierCurveTo(x + 7, y, x + 5, y + 5, x + 5, y + 5);
+
+    const extrudeSettings = {
+        depth: 2,
+        bevelEnabled: true,
+        bevelSegments: 5,
+        steps: 2,
+        bevelSize: 1,
+        bevelThickness: 1
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+    geometry.center();
+    geometry.scale(0.3, 0.3, 0.3);
+
+    const material = new THREE.MeshPhysicalMaterial({
+        color: 0xff6b9d,
+        metalness: 0.1,
+        roughness: 0.2,
+        transmission: 0.6,
+        thickness: 2,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        emissive: 0xff1493,
+        emissiveIntensity: 0.2
+    });
+
+    const heartMesh = new THREE.Mesh(geometry, material);
+    heartMesh.userData = { isCentral: true, originalScale: 1 };
+    scene.add(heartMesh);
+    hearts.push(heartMesh);
+}
+
+// Créer les cœurs flottants interactifs
+function createFloatingHearts() {
+    const heartGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+
+    poems.forEach((poem, index) => {
+        const material = new THREE.MeshPhysicalMaterial({
+            color: poem.color,
+            metalness: 0.3,
+            roughness: 0.1,
+            transmission: 0.4,
+            thickness: 1,
+            emissive: poem.color,
+            emissiveIntensity: 0.3,
+            clearcoat: 1
+        });
+
+        const heart = new THREE.Mesh(heartGeometry, material);
+
+        // Position aléatoire sur une sphère
+        const phi = Math.acos(-1 + (2 * index) / poems.length);
+        const theta = Math.sqrt(poems.length * Math.PI) * phi;
+        const radius = 6;
+
+        heart.position.x = radius * Math.cos(theta) * Math.sin(phi);
+        heart.position.y = radius * Math.sin(theta) * Math.sin(phi);
+        heart.position.z = radius * Math.cos(phi);
+
+        heart.userData = { 
+            poemIndex: index, 
+            originalPos: heart.position.clone(),
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.5 + Math.random() * 0.5
+        };
+
+        scene.add(heart);
+        hearts.push(heart);
+
+        // Ajouter une lumière ponctuelle à chaque cœur
+        const light = new THREE.PointLight(poem.color, 1, 10);
+        light.position.copy(heart.position);
+        scene.add(light);
+        heart.userData.light = light;
+    });
+}
+
+// Créer des particules d'ambiance
+function createParticles() {
+    const particleCount = isMobile ? 50 : 150;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 30;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+
+        const color = new THREE.Color();
+        color.setHSL(Math.random() * 0.1 + 0.9, 0.8, 0.8);
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+        size: 0.15,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particleSystem = new THREE.Points(geometry, material);
+    scene.add(particleSystem);
+    particles.push(particleSystem);
+}
+
+// Créer des sphères d'ambiance
+function createAmbientSpheres() {
+    const sphereCount = isMobile ? 3 : 6;
+
+    for (let i = 0; i < sphereCount; i++) {
+        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.3
+        });
+
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.set(
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 10
+        );
+
+        sphere.userData = {
+            speed: 0.2 + Math.random() * 0.3,
+            phase: Math.random() * Math.PI * 2
+        };
+
+        scene.add(sphere);
+        particles.push(sphere);
+    }
+}
+
+// Gestion des événements
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseMove(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Effet parallax subtil
+    camera.position.x += (mouse.x * 2 - camera.position.x) * 0.05;
+    camera.position.y += (mouse.y * 2 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
+}
+
+function onTouchStart(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+    checkIntersection();
+}
+
+function onTouchMove(event) {
+    event.preventDefault();
+    if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+        // Rotation de la caméra basée sur le touch
+        camera.position.x = Math.sin(mouse.x * 0.5) * 15;
+        camera.position.z = Math.cos(mouse.x * 0.5) * 15;
+        camera.lookAt(scene.position);
+    }
+}
+
+function onClick(event) {
+    checkIntersection();
+}
+
+function checkIntersection() {
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(hearts);
+
+    for (let intersect of intersects) {
+        const object = intersect.object;
+        if (object.userData.poemIndex !== undefined) {
+            showPoem(object.userData.poemIndex);
+            animateHeartClick(object);
+            break;
+        }
+    }
+}
+
+function animateHeartClick(heart) {
+    // Animation de pulsation
+    const originalScale = heart.scale.x;
+    heart.scale.setScalar(originalScale * 1.5);
+
+    setTimeout(() => {
+        heart.scale.setScalar(originalScale);
+    }, 300);
+}
+
+// Afficher un poème
+window.showPoem = function(index) {
+    const poem = poems[index];
+    document.getElementById('poemTitle').textContent = poem.title;
+    document.getElementById('poemText').textContent = poem.text;
+    document.getElementById('poemContainer').classList.add('active');
+
+    if (!collectedPoems.has(index)) {
+        collectedPoems.add(index);
+        document.getElementById('collectedCount').textContent = collectedPoems.size;
+
+        // Effet de confetti si tous collectés
+        if (collectedPoems.size === poems.length) {
+            celebrate();
+        }
+    }
+};
+
+window.closePoem = function() {
+    document.getElementById('poemContainer').classList.remove('active');
+};
+
+// Célébration quand tous les poèmes sont collectés
+function celebrate() {
+    const counter = document.querySelector('.hearts-counter');
+    counter.style.animation = 'pulse 1s ease-in-out infinite';
+    counter.style.color = '#ffd700';
+
+    // Créer des cœurs bonus
+    for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+            createBonusHeart();
+        }, i * 100);
+    }
+}
+
+function createBonusHeart() {
+    const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xffd700,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const heart = new THREE.Mesh(geometry, material);
+    heart.position.set(
+        (Math.random() - 0.5) * 10,
+        -10,
+        (Math.random() - 0.5) * 5
+    );
+
+    scene.add(heart);
+
+    // Animation de montée
+    const animate = () => {
+        heart.position.y += 0.1;
+        heart.material.opacity -= 0.01;
+
+        if (heart.material.opacity > 0) {
+            requestAnimationFrame(animate);
+        } else {
+            scene.remove(heart);
+        }
+    };
+    animate();
+}
+
+// Animation principale
+function animate() {
+    requestAnimationFrame(animate);
+
+    const time = Date.now() * 0.001;
+
+    // Animer les cœurs
+    hearts.forEach((heart, index) => {
+        if (heart.userData.isCentral) {
+            // Rotation du cœur central
+            heart.rotation.y = time * 0.5;
+            heart.rotation.x = Math.sin(time * 0.5) * 0.1;
+
+            // Pulsation
+            const scale = 1 + Math.sin(time * 2) * 0.05;
+            heart.scale.setScalar(scale);
+        } else if (heart.userData.originalPos) {
+            // Mouvement orbital des cœurs flottants
+            const data = heart.userData;
+            const offset = Math.sin(time * data.speed + data.phase) * 0.5;
+
+            heart.position.x = data.originalPos.x + Math.sin(time * 0.5 + index) * 0.3;
+            heart.position.y = data.originalPos.y + offset;
+            heart.position.z = data.originalPos.z + Math.cos(time * 0.3 + index) * 0.3;
+
+            // Rotation sur soi-même
+            heart.rotation.x = time * 0.5;
+            heart.rotation.y = time * 0.3;
+
+            // Mettre à jour la lumière
+            if (heart.userData.light) {
+                heart.userData.light.position.copy(heart.position);
+            }
+        }
+    });
+
+    // Animer les particules
+    particles.forEach((particle, index) => {
+        if (particle.geometry && particle.geometry.attributes.position) {
+            // Rotation du système de particules
+            particle.rotation.y = time * 0.05 * (index % 2 === 0 ? 1 : -1);
+        } else if (particle.userData.speed) {
+            // Mouvement des sphères d'ambiance
+            particle.position.y += Math.sin(time + particle.userData.phase) * 0.01;
+        }
+    });
+
+    if (controls) {
+        controls.update();
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Démarrer
+init();
+
+    </script>
+</body>
+</html>
